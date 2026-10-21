@@ -1,0 +1,83 @@
+<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b7a75"><link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png"><title>صيدلية النور - الشطرة</title>
+<style>
+:root{--t:#0b7a75;--g:rgba(255,255,255,.55)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:Tahoma,Arial,sans-serif;color:#064c49;background:#fff url(bg.png) center top/cover no-repeat fixed;min-height:100vh}
+#top{position:fixed;top:0;left:0;right:0;height:34vh;z-index:5}
+#main{padding:calc(36vh) 14px 90px;min-height:100vh}
+.glass{background:var(--g);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.7);border-radius:18px;box-shadow:0 4px 14px rgba(11,122,117,.15)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ic{padding:18px 8px;text-align:center;font-weight:bold;cursor:pointer;font-size:15px}
+.ic i{display:block;font-style:normal;font-size:34px;margin-bottom:6px}
+footer{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-around;padding:8px 6px calc(8px + env(safe-area-inset-bottom));z-index:6;border-radius:18px 18px 0 0}
+footer b{flex:1;text-align:center;font-size:12px;cursor:pointer}footer b i{display:block;font-style:normal;font-size:22px}
+input,textarea{width:100%;padding:12px;margin:5px 0;border:1px solid #9bd;border-radius:12px;font:inherit;background:rgba(255,255,255,.85)}
+button{font:inherit;border:0;border-radius:12px;padding:10px 14px;background:var(--t);color:#fff;cursor:pointer}
+button.o{background:#c0392b}button.w{background:#25d366;width:100%;padding:14px;font-size:16px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px;margin:8px 0}
+.row small{color:#555}.na{opacity:.5}h3{margin:6px 0;text-align:center;background:var(--g);border-radius:12px;padding:8px}
+.tabs{display:flex;gap:6px;margin-bottom:8px}.tabs button{flex:1;padding:8px}
+.q button{padding:2px 10px}
+</style></head><body>
+<div id="top"></div><div id="main"></div>
+<footer class="glass"><b onclick="go('home')"><i>🏠</i>الرئيسية</b><b onclick="go('search')"><i>💊</i>الأدوية</b><b onclick="go('cart')"><i>🛒</i>سلتي <span id="cc"></span></b><b onclick="openWA()"><i>💬</i>واتساب</b></footer>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+/* ===== الإعدادات: عدّلها ===== */
+const CFG={
+ hash:"d6ff2900aec3d5c8a874ed2d2cb08a8155f9cac7f59dba9225ef8060d6757b8e", // SHA-256 لرمز الإدارة
+ firebase:{apiKey:"",authDomain:"",projectId:"",appId:""} // من Firebase Console
+};
+let S={wa:'',phone:''},meds=[],cart=[],v='home',q='',db=null,tab='meds',orders=[];
+const L=(k,d)=>JSON.parse(localStorage.getItem(k)||JSON.stringify(d));
+const $=id=>document.getElementById(id),fmt=n=>Number(n).toLocaleString('ar-IQ')+' د.ع';
+if(CFG.firebase.apiKey){firebase.initializeApp(CFG.firebase);db=firebase.firestore();
+ db.collection('settings').doc('main').onSnapshot(d=>{if(d.exists){S=d.data();draw()}});
+ db.collection('meds').orderBy('name').onSnapshot(s=>{meds=s.docs.map(d=>({id:d.id,...d.data()}));draw()});
+}else{S=L('S',S);meds=L('meds',[{id:'1',name:'بنادول 500 ملغم',price:2000,note:'مسكن وخافض حرارة',av:true},{id:'2',name:'فيتامين C',price:3500,note:'',av:true}])}
+const saveLocal=()=>localStorage.setItem('meds',JSON.stringify(meds));
+// ===== الضغط 10 مرات في أعلى التطبيق =====
+let tp=0,tt;$('top').onclick=()=>{tp++;clearTimeout(tt);tt=setTimeout(()=>tp=0,4000);if(tp>=10){tp=0;go('login')}};
+function go(x){v=x;draw();scrollTo(0,0)}
+function draw(){$('cc').textContent=cart.length?`(${cart.length})`:'';const m=$('main');
+ if(v=='home')m.innerHTML=`<div class="grid">
+ <div class="glass ic" onclick="go('search')"><i>💊</i>ابحث عن دوائك</div>
+ <div class="glass ic" onclick="go('cart')"><i>🛒</i>سلة الطلب</div>
+ <div class="glass ic" onclick="openWA()"><i>💬</i>تواصل واتساب</div>
+ <div class="glass ic" onclick="location.href='tel:${S.phone}'"><i>📞</i>اتصل بنا</div></div>
+ <p class="glass" style="padding:12px;text-align:center">اطلب دواءك وسيصلك إلى باب بيتك 🚚</p>`;
+ if(v=='search'){const r=meds.filter(d=>d.name.includes(q));
+ m.innerHTML=`<input id="s" placeholder="🔍 ابحث عن اسم الدواء..." value="${q}" oninput="q=this.value;list()"><div id="l"></div>`;list();$('s').focus()}
+ if(v=='cart')cartV();
+ if(v=='login')m.innerHTML=`<h3>🔐 دخول الإدارة</h3><div class="glass" style="padding:14px"><input id="pw" type="password" placeholder="رمز الدخول"><button onclick="login()" style="width:100%">دخول</button></div>`;
+ if(v=='admin')adminV()}
+function list(){const r=meds.filter(d=>d.name.includes(q));$('l').innerHTML=r.length?r.map(d=>`<div class="glass row ${d.av?'':'na'}"><div><b>${d.name}</b><br><small>${d.note||''}</small><br><b style="color:#0b7a75">${fmt(d.price)}</b></div>${d.av?`<button onclick="add('${d.id}')">+ أضف</button>`:'<small>غير متوفر</small>'}</div>`).join(''):'<div class="glass row">لا توجد نتائج — يمكنك طلبه عبر واتساب</div>'}
+function add(id){const i=cart.find(c=>c.id==id);i?i.n++:cart.push({id,n:1});$('cc').textContent=`(${cart.length})`}
+function cartV(){const t=cart.reduce((s,c)=>s+c.n*(meds.find(d=>d.id==c.id)?.price||0),0);
+ $('main').innerHTML=`<h3>🛒 سلتي</h3>`+(cart.length?cart.map((c,i)=>{const d=meds.find(x=>x.id==c.id)||{name:'؟',price:0};return `<div class="glass row"><div><b>${d.name}</b><br><small>${fmt(d.price)}</small></div><span class="q"><button onclick="cart[${i}].n++;draw()">+</button> ${c.n} <button onclick="if(--cart[${i}].n<1)cart.splice(${i},1);draw()">−</button></span></div>`}).join('')+`<div class="glass" style="padding:14px"><b>المجموع: ${fmt(t)}</b>
+ <input id="ph" type="tel" placeholder="📱 رقم هاتفك" value="${localStorage.ph||''}"><input id="lo" placeholder="📍 موقعك / عنوانك"><button onclick="gps()" style="width:100%;margin-bottom:8px">📍 تحديد موقعي تلقائياً</button>
+ <button class="w" onclick="send()">إرسال الطلب عبر واتساب</button></div>`:'<div class="glass row">السلة فارغة</div>')}
+function gps(){navigator.geolocation.getCurrentPosition(p=>$('lo').value=`https://maps.google.com/?q=${p.coords.latitude},${p.coords.longitude}`,()=>alert('فعّل خدمة الموقع'),{enableHighAccuracy:true})}
+function send(){const ph=$('ph').value.trim(),lo=$('lo').value.trim();if(!S.wa)return alert('رقم الواتساب غير مضبوط من الإدارة');if(!ph||!lo)return alert('أدخل رقم الهاتف والموقع');localStorage.ph=ph;
+ let t=0;const ls=cart.map(c=>{const d=meds.find(x=>x.id==c.id);t+=d.price*c.n;return `• ${d.name} × ${c.n} = ${fmt(d.price*c.n)}`}).join('\n');
+ const msg=`🏥 طلب جديد - صيدلية النور\n${ls}\n💰 المجموع: ${fmt(t)}\n📱 الهاتف: ${ph}\n📍 الموقع: ${lo}`;
+ if(db)db.collection('orders').add({msg,ph,lo,t,at:Date.now()});
+ window.open(`https://wa.me/${S.wa}?text=${encodeURIComponent(msg)}`);cart=[];go('home')}
+function openWA(){window.open(`https://wa.me/${S.wa}`)}
+// ===== الإدارة =====
+async function sha(s){return[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)))].map(b=>b.toString(16).padStart(2,'0')).join('')}
+async function login(){if(await sha($('pw').value)==CFG.hash){if(db)db.collection('orders').orderBy('at','desc').limit(30).onSnapshot(s=>{orders=s.docs.map(d=>d.data());if(v=='admin'&&tab=='ord')draw()});go('admin')}else alert('رمز خاطئ')}
+function adminV(){$('main').innerHTML=`<h3>⚙️ لوحة الإدارة</h3><div class="tabs"><button onclick="tab='meds';draw()">الأدوية</button><button onclick="tab='ord';draw()">الطلبات</button><button onclick="tab='set';draw()">الإعدادات</button><button class="o" onclick="go('home')">خروج</button></div>`+(tab=='set'?setV():tab=='ord'?(orders.length?orders.map(o=>`<div class="glass row" style="white-space:pre-line;font-size:13px">${o.msg}</div>`).join(''):'<div class="glass row">لا طلبات (تحتاج Firebase)</div>'):
+ `<div class="glass" style="padding:12px"><input type="hidden" id="eid"><input id="nm" placeholder="اسم الدواء"><input id="pr" type="number" placeholder="السعر"><input id="nt" placeholder="ملاحظة (اختياري)"><label><input type="checkbox" id="av" checked style="width:auto"> متوفر</label><button onclick="saveMed()" style="width:100%">💾 حفظ</button></div>`+meds.map(d=>`<div class="glass row"><div><b>${d.name}</b><br><small>${fmt(d.price)} ${d.av?'':'• غير متوفر'}</small></div><span><button onclick="edit('${d.id}')">✏️</button> <button class="o" onclick="del('${d.id}')">🗑</button></span></div>`).join(''))}
+function setV(){return `<div class="glass" style="padding:12px"><b>رقم واتساب استقبال الطلبات</b><input id="swa" type="tel" value="${S.wa}" placeholder="9647701234567"><small>بصيغة دولية بدون + أو أصفار</small><br><b>رقم الاتصال</b><input id="sph" type="tel" value="${S.phone}" placeholder="07701234567"><button onclick="saveS()" style="width:100%">💾 حفظ</button></div>`}
+function saveS(){S={wa:swa.value.replace(/\D/g,''),phone:sph.value.trim()};if(db)db.collection('settings').doc('main').set(S);else localStorage.S=JSON.stringify(S);alert('تم الحفظ ✅')}
+function edit(id){const d=meds.find(x=>x.id==id);eid.value=id;nm.value=d.name;pr.value=d.price;nt.value=d.note||'';av.checked=d.av;scrollTo(0,0)}
+function saveMed(){const o={name:nm.value.trim(),price:+pr.value,note:nt.value,av:av.checked};if(!o.name||!o.price)return alert('أكمل البيانات');const id=eid.value;
+ if(db){id?db.collection('meds').doc(id).set(o):db.collection('meds').add(o)}else{id?Object.assign(meds.find(x=>x.id==id),o):meds.push({id:Date.now()+'',...o});saveLocal();draw()}}
+function del(id){if(!confirm('حذف؟'))return;if(db)db.collection('meds').doc(id).delete();else{meds=meds.filter(x=>x.id!=id);saveLocal();draw()}}
+draw();if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
+</script></body></html>
