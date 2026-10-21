@@ -26,11 +26,12 @@ button.o{background:#c0392b}button.w{background:#25d366;width:100%;padding:14px;
 <footer class="glass"><b onclick="go('home')"><i>🏠</i>الرئيسية</b><b onclick="go('search')"><i>💊</i>الأدوية</b><b onclick="go('cart')"><i>🛒</i>سلتي <span id="cc"></span></b><b onclick="openWA()"><i>💬</i>واتساب</b></footer>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script>
 /* ===== الإعدادات: عدّلها ===== */
 const CFG={
  hash:"d6ff2900aec3d5c8a874ed2d2cb08a8155f9cac7f59dba9225ef8060d6757b8e", // SHA-256 لرمز الإدارة
- firebase:{apiKey:"",authDomain:"",projectId:"",appId:""} // من Firebase Console
+ firebase:{apiKey:"AIzaSyCX53ug7ElXAaJiWxfaxowfLwL-fc2anp8",authDomain:"noor-shatra.firebaseapp.com",projectId:"noor-shatra",storageBucket:"noor-shatra.firebasestorage.app",messagingSenderId:"969595896646",appId:"1:969595896646:web:3cc8065b44c073d5fe1b47"} // من Firebase Console
 };
 let S={wa:'',phone:''},meds=[],cart=[],v='home',q='',db=null,tab='meds',orders=[];
 const L=(k,d)=>JSON.parse(localStorage.getItem(k)||JSON.stringify(d));
@@ -70,8 +71,12 @@ function send(){const ph=$('ph').value.trim(),lo=$('lo').value.trim();if(!S.wa)r
 function openWA(){window.open(`https://wa.me/${S.wa}`)}
 // ===== الإدارة =====
 async function sha(s){return[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)))].map(b=>b.toString(16).padStart(2,'0')).join('')}
-async function login(){if(await sha($('pw').value)==CFG.hash){if(db)db.collection('orders').orderBy('at','desc').limit(30).onSnapshot(s=>{orders=s.docs.map(d=>d.data());if(v=='admin'&&tab=='ord')draw()});go('admin')}else alert('رمز خاطئ')}
-function adminV(){$('main').innerHTML=`<h3>⚙️ لوحة الإدارة</h3><div class="tabs"><button onclick="tab='meds';draw()">الأدوية</button><button onclick="tab='ord';draw()">الطلبات</button><button onclick="tab='set';draw()">الإعدادات</button><button class="o" onclick="go('home')">خروج</button></div>`+(tab=='set'?setV():tab=='ord'?(orders.length?orders.map(o=>`<div class="glass row" style="white-space:pre-line;font-size:13px">${o.msg}</div>`).join(''):'<div class="glass row">لا طلبات (تحتاج Firebase)</div>'):
+async function login(){const pw=$('pw').value;let ok=false;
+ if(db){try{await firebase.auth().signInWithEmailAndPassword('admin@noor.app',pw);ok=true}catch(e){ok=false}}else ok=(await sha(pw))==CFG.hash;
+ if(!ok)return alert('رمز خاطئ');
+ if(db)db.collection('orders').orderBy('at','desc').limit(30).onSnapshot(s=>{orders=s.docs.map(d=>d.data());if(v=='admin'&&tab=='ord')draw()},e=>console.log(e));go('admin')}
+function logout(){if(db)firebase.auth().signOut();go('home')}
+function adminV(){$('main').innerHTML=`<h3>⚙️ لوحة الإدارة</h3><div class="tabs"><button onclick="tab='meds';draw()">الأدوية</button><button onclick="tab='ord';draw()">الطلبات</button><button onclick="tab='set';draw()">الإعدادات</button><button class="o" onclick="logout()">خروج</button></div>`+(tab=='set'?setV():tab=='ord'?(orders.length?orders.map(o=>`<div class="glass row" style="white-space:pre-line;font-size:13px">${o.msg}</div>`).join(''):'<div class="glass row">لا طلبات (تحتاج Firebase)</div>'):
  `<div class="glass" style="padding:12px"><input type="hidden" id="eid"><input id="nm" placeholder="اسم الدواء"><input id="pr" type="number" placeholder="السعر"><input id="nt" placeholder="ملاحظة (اختياري)"><label><input type="checkbox" id="av" checked style="width:auto"> متوفر</label><button onclick="saveMed()" style="width:100%">💾 حفظ</button></div>`+meds.map(d=>`<div class="glass row"><div><b>${d.name}</b><br><small>${fmt(d.price)} ${d.av?'':'• غير متوفر'}</small></div><span><button onclick="edit('${d.id}')">✏️</button> <button class="o" onclick="del('${d.id}')">🗑</button></span></div>`).join(''))}
 function setV(){return `<div class="glass" style="padding:12px"><b>رقم واتساب استقبال الطلبات</b><input id="swa" type="tel" value="${S.wa}" placeholder="9647701234567"><small>بصيغة دولية بدون + أو أصفار</small><br><b>رقم الاتصال</b><input id="sph" type="tel" value="${S.phone}" placeholder="07701234567"><button onclick="saveS()" style="width:100%">💾 حفظ</button></div>`}
 function saveS(){S={wa:swa.value.replace(/\D/g,''),phone:sph.value.trim()};if(db)db.collection('settings').doc('main').set(S);else localStorage.S=JSON.stringify(S);alert('تم الحفظ ✅')}
