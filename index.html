@@ -62,14 +62,17 @@ function smart(items,q,fn){const qt=norm(q).split(' ').filter(Boolean);if(!qt.le
  const sc=items.map(x=>{const nt=norm(fn(x)).split(' ');return{x,s:qt.reduce((a,w)=>a+Math.max(0,...nt.map(t=>tsc(w,t))),0)/qt.length}}).sort((a,b)=>b.s-a.s);
  let r=sc.filter(o=>o.s>=.6);if(!r.length)r=sc.filter(o=>o.s>=.45).slice(0,3);
  return{list:r.map(o=>o.x),fuzzy:r.length>0&&r[0].s<.85}}
+
+function toast(m){const t=document.createElement('div');t.textContent=m;t.style.cssText='position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:#0b7a75;color:#fff;padding:12px 20px;border-radius:14px;z-index:120;max-width:85%;text-align:center;box-shadow:0 4px 14px rgba(0,0,0,.3)';document.body.appendChild(t);setTimeout(()=>t.remove(),2800)}
+function ask(m,ok){const d=document.createElement('div');d.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:120;display:flex;align-items:center;justify-content:center';d.innerHTML=`<div class="glass" style="background:#fff;padding:20px;width:80%;max-width:320px;text-align:center"><p style="font-weight:bold">${m}</p><button id="y" style="margin:4px">نعم</button><button id="n" class="o" style="margin:4px;background:#888">إلغاء</button></div>`;document.body.appendChild(d);d.querySelector('#y').onclick=()=>{d.remove();ok()};d.querySelector('#n').onclick=()=>d.remove()}
 const has=(a,b)=>a.toLowerCase().includes(b.toLowerCase());
 function pick(inp,cb){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{const i=new Image();i.onload=()=>{const k=Math.min(1,500/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);cb(c.toDataURL('image/jpeg',.7))};i.src=e.target.result};r.readAsDataURL(f)}
 function zoom(s){const d=document.createElement('div');d.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99;display:flex;align-items:center;justify-content:center';d.innerHTML=`<img src="${s}" style="max-width:95%;max-height:90%;border-radius:12px">`;d.onclick=()=>d.remove();document.body.appendChild(d)}
 const thumb=d=>d.img?`<img src="${d.img}" onclick="zoom(this.src)" style="width:56px;height:56px;object-fit:cover;border-radius:10px;flex:none">`:'';
 function catList(){const q=($('cs')?.value||'').trim();const have=new Set(meds.map(d=>d.name));let r=CAT.map((x,i)=>({...x,i})).filter(x=>!have.has(x.n));if(q)r=smart(r,q,x=>x.n+' '+x.c).list;const t=r.length;r=r.slice(0,40);
  $('cl').innerHTML=(r.map(x=>`<div class="glass row"><div><b style="font-size:14px">${x.n}</b><br><small>${x.c}</small></div><span style="display:flex;gap:4px"><input type="number" id="cp${x.i}" placeholder="السعر" style="width:85px;margin:0"><button onclick="addCat(${x.i})">+</button></span></div>`).join('')+(t>40?`<small>يوجد ${t-40} أخرى، ابحث لتضييق النتائج</small>`:''))||'<small>لا نتائج</small>'}
-function addCat(i){const p=+$('cp'+i).value;if(!p)return alert('اكتب السعر أولاً');put({name:CAT[i].n,price:p,note:CAT[i].c,av:true,img:''})}
-function put(o,id){if(db){(id?db.collection('meds').doc(id).set(o):db.collection('meds').add(o)).catch(e=>alert('خطأ: '+e.message))}else{id?Object.assign(meds.find(x=>x.id==id),o):meds.push({id:Date.now()+'',...o});saveLocal();draw()}}
+function addCat(i){const p=+$('cp'+i).value;if(!p)return toast('اكتب السعر أولاً');put({name:CAT[i].n,price:p,note:CAT[i].c,av:true,img:''})}
+function put(o,id){if(db){(id?db.collection('meds').doc(id).set(o):db.collection('meds').add(o)).catch(e=>toast('خطأ: '+e.message))}else{id?Object.assign(meds.find(x=>x.id==id),o):meds.push({id:Date.now()+'',...o});saveLocal();draw()}}
 const L=(k,d)=>JSON.parse(localStorage.getItem(k)||JSON.stringify(d));
 const $=id=>document.getElementById(id),fmt=n=>Number(n).toLocaleString('ar-IQ')+' د.ع';
 if(CFG.firebase.apiKey){firebase.initializeApp(CFG.firebase);db=firebase.firestore();
@@ -99,8 +102,8 @@ function cartV(){const t=cart.reduce((s,c)=>s+c.n*(meds.find(d=>d.id==c.id)?.pri
  $('main').innerHTML=`<h3>🛒 سلتي</h3>`+(cart.length?cart.map((c,i)=>{const d=meds.find(x=>x.id==c.id)||{name:'؟',price:0};return `<div class="glass row"><div><b>${d.name}</b><br><small>${fmt(d.price)}</small></div><span class="q"><button onclick="cart[${i}].n++;draw()">+</button> ${c.n} <button onclick="if(--cart[${i}].n<1)cart.splice(${i},1);draw()">−</button></span></div>`}).join('')+`<div class="glass" style="padding:14px"><b>المجموع: ${fmt(t)}</b>
  <input id="ph" type="tel" placeholder="📱 رقم هاتفك" value="${localStorage.ph||''}"><input id="lo" placeholder="📍 موقعك / عنوانك"><button onclick="gps()" style="width:100%;margin-bottom:8px">📍 تحديد موقعي تلقائياً</button>
  <button class="w" onclick="send()">إرسال الطلب عبر واتساب</button></div>`:'<div class="glass row">السلة فارغة</div>')}
-function gps(){navigator.geolocation.getCurrentPosition(p=>$('lo').value=`https://maps.google.com/?q=${p.coords.latitude},${p.coords.longitude}`,()=>alert('فعّل خدمة الموقع'),{enableHighAccuracy:true})}
-function send(){const ph=$('ph').value.trim(),lo=$('lo').value.trim();if(!S.wa)return alert('رقم الواتساب غير مضبوط من الإدارة');if(!ph||!lo)return alert('أدخل رقم الهاتف والموقع');localStorage.ph=ph;
+function gps(){navigator.geolocation.getCurrentPosition(p=>$('lo').value=`https://maps.google.com/?q=${p.coords.latitude},${p.coords.longitude}`,()=>toast('فعّل خدمة الموقع'),{enableHighAccuracy:true})}
+function send(){const ph=$('ph').value.trim(),lo=$('lo').value.trim();if(!S.wa)return toast('رقم الواتساب غير مضبوط من الإدارة');if(!ph||!lo)return toast('أدخل رقم الهاتف والموقع');localStorage.ph=ph;
  let t=0;const ls=cart.map(c=>{const d=meds.find(x=>x.id==c.id);t+=d.price*c.n;return `• ${d.name} × ${c.n} = ${fmt(d.price*c.n)}`}).join('\n');
  const msg=`🏥 طلب جديد - صيدلية النور\n${ls}\n💰 المجموع: ${fmt(t)}\n📱 الهاتف: ${ph}\n📍 الموقع: ${lo}`;
  if(db)db.collection('orders').add({msg,ph,lo,t,at:Date.now()});
@@ -110,15 +113,15 @@ function openWA(){window.open(`https://wa.me/${S.wa}`)}
 async function sha(s){return[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)))].map(b=>b.toString(16).padStart(2,'0')).join('')}
 async function login(){const pw=$('pw').value;let ok=false;
  if(db){try{await firebase.auth().signInWithEmailAndPassword('admin@noor.app',pw);ok=true}catch(e){ok=false}}else ok=(await sha(pw))==CFG.hash;
- if(!ok)return alert('رمز خاطئ');
+ if(!ok)return toast('رمز خاطئ');
  if(db)db.collection('orders').orderBy('at','desc').limit(30).onSnapshot(s=>{orders=s.docs.map(d=>d.data());if(v=='admin'&&tab=='ord')draw()},e=>console.log(e));go('admin')}
 function logout(){if(db)firebase.auth().signOut();go('home')}
 function adminV(){$('main').innerHTML=`<h3>⚙️ لوحة الإدارة</h3><div class="tabs"><button onclick="tab='meds';draw()">الأدوية</button><button onclick="tab='ord';draw()">الطلبات</button><button onclick="tab='set';draw()">الإعدادات</button><button class="o" onclick="logout()">خروج</button></div>`+(tab=='set'?setV():tab=='ord'?(orders.length?orders.map(o=>`<div class="glass row" style="white-space:pre-line;font-size:13px">${o.msg}</div>`).join(''):'<div class="glass row">لا طلبات (تحتاج Firebase)</div>'):
  `<div class="glass" style="padding:12px"><input type="hidden" id="eid"><input id="nm" placeholder="اسم الدواء"><input id="pr" type="number" placeholder="السعر"><input id="nt" placeholder="ملاحظة (اختياري)"><input type="file" id="fi" accept="image/*" onchange="pick(this,d=>{curImg=d;pv.src=d;pv.style.display='block'})"><img id="pv" style="display:none;width:80px;border-radius:10px;margin:4px 0"><label><input type="checkbox" id="av" checked style="width:auto"> متوفر</label><button onclick="saveMed()" style="width:100%">💾 حفظ</button></div><h3>📚 أدوية جاهزة: اكتب السعر فقط</h3><div class="glass" style="padding:10px"><input id="cs" placeholder="🔍 ابحث في القائمة (عربي أو English)" oninput="catList()"><div id="cl"></div></div><h3>✅ أدويتك المضافة (${meds.length})</h3>`+meds.map(d=>`<div class="glass row"><div style="display:flex;gap:8px;align-items:center">${thumb(d)}<div><b>${d.name}</b><br><small>${fmt(d.price)} ${d.av?'':'• غير متوفر'}</small></div></div><span><button onclick="edit('${d.id}')">✏️</button> <button class="o" onclick="del('${d.id}')">🗑</button></span></div>`).join(''))}
 function setV(){return `<div class="glass" style="padding:12px"><b>رقم واتساب استقبال الطلبات</b><input id="swa" type="tel" value="${S.wa}" placeholder="9647701234567"><small>بصيغة دولية بدون + أو أصفار</small><br><b>رقم الاتصال</b><input id="sph" type="tel" value="${S.phone}" placeholder="07701234567"><button onclick="saveS()" style="width:100%">💾 حفظ</button></div>`}
-function saveS(){S={wa:swa.value.replace(/\D/g,''),phone:sph.value.trim()};if(db)db.collection('settings').doc('main').set(S);else localStorage.S=JSON.stringify(S);alert('تم الحفظ ✅')}
+function saveS(){S={wa:swa.value.replace(/\D/g,''),phone:sph.value.trim()};if(db)db.collection('settings').doc('main').set(S);else localStorage.S=JSON.stringify(S);toast('تم الحفظ ✅')}
 function edit(id){const d=meds.find(x=>x.id==id);eid.value=id;nm.value=d.name;pr.value=d.price;nt.value=d.note||'';av.checked=d.av;curImg=d.img||'';if(curImg){pv.src=curImg;pv.style.display='block'}scrollTo(0,0)}
-function saveMed(){const o={name:nm.value.trim(),price:+pr.value,note:nt.value,av:av.checked,img:curImg};if(!o.name||!o.price)return alert('أكمل الاسم والسعر');put(o,eid.value);curImg='';alert('تم الحفظ ✅')}
-function del(id){if(!confirm('حذف؟'))return;if(db)db.collection('meds').doc(id).delete();else{meds=meds.filter(x=>x.id!=id);saveLocal();draw()}}
+function saveMed(){const o={name:nm.value.trim(),price:+pr.value,note:nt.value,av:av.checked,img:curImg};if(!o.name||!o.price)return toast('أكمل الاسم والسعر');put(o,eid.value);curImg='';toast('تم الحفظ ✅')}
+function del(id){ask('حذف هذا الدواء؟',()=>{if(db)db.collection('meds').doc(id).delete();else{meds=meds.filter(x=>x.id!=id);saveLocal();draw()}})}
 draw();if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
 </script></body></html>
