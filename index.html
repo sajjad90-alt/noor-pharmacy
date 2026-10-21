@@ -49,11 +49,24 @@ const CATRAW={
 'مستلزمات طبية':'جهاز قياس الضغط|جهاز ضغط;ميزان حرارة رقمي|ميزان حرارة;كمامات طبية|كمامات;قفازات طبية|قفازات;شاش معقم|شاش;قطن طبي|قطن;ضمادات لاصقة|لاصق جروح;سرنجات 5 مل|سرنجة 5مل;سرنجات 10 مل|سرنجة 10مل;كحول طبي|كحول طبي;ماء أوكسجين|ماء أوكسجين;Dettol|ديتول;جهاز بخار نيبولايزر|نيبولايزر;جهاز أوكسيجين نبض|جهاز أوكسجين;حزام ظهر|حزام ظهر;عكاز|عكاز;كرسي متحرك|كرسي متحرك'};
 const CAT=[];for(const c in CATRAW)CATRAW[c].split(';').forEach(x=>{const[e,a]=x.split('|');CAT.push({c,n:a?e+' '+a:e})});
 let curImg='';
+
+/* ===== البحث الذكي ===== */
+const AM={'أ':'ا','إ':'ا','آ':'ا','ى':'ي','ة':'ه','ؤ':'و','ئ':'ي','ء':'','ق':'ك','ث':'س','ص':'س','ز':'س','ذ':'د','ض':'د','ظ':'د','ط':'ت'};
+function norm(t){t=t.toLowerCase().replace(/[\u064B-\u0652\u0640]/g,'').replace(/[أإآىةؤئءقثصزذضظط]/g,c=>AM[c]).replace(/ph/g,'f').replace(/ck/g,'k').replace(/ee/g,'i').replace(/o[ou]/g,'u').replace(/x/g,'ks').replace(/[pb]/g,'b').replace(/v/g,'f').replace(/[cq]/g,'k').replace(/z/g,'s').replace(/y/g,'i');
+ return t.replace(/[^a-z0-9\u0621-\u064A]+/g,' ').replace(/([a-z\u0621-\u064A])\1+/g,'$1').trim()}
+function ed(a,b){const m=a.length,n=b.length,d=[];for(let i=0;i<=m;i++)d[i]=[i];for(let j=1;j<=n;j++)d[0][j]=j;
+ for(let i=1;i<=m;i++)for(let j=1;j<=n;j++){d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]==b[j-1]?0:1));if(i>1&&j>1&&a[i-1]==b[j-2]&&a[i-2]==b[j-1])d[i][j]=Math.min(d[i][j],d[i-2][j-2]+1)}return d[m][n]}
+function tsc(q,t){if(t.startsWith(q))return 1;if(/^\d/.test(q))return 0;if(q.length<3)return 0;if(t.includes(q))return .85;
+ const a=1-ed(q,t)/Math.max(q.length,t.length),p=t.slice(0,q.length),b=(1-ed(q,p)/q.length)*.95;return Math.max(a,b)}
+function smart(items,q,fn){const qt=norm(q).split(' ').filter(Boolean);if(!qt.length)return{list:items,fuzzy:false};
+ const sc=items.map(x=>{const nt=norm(fn(x)).split(' ');return{x,s:qt.reduce((a,w)=>a+Math.max(0,...nt.map(t=>tsc(w,t))),0)/qt.length}}).sort((a,b)=>b.s-a.s);
+ let r=sc.filter(o=>o.s>=.6);if(!r.length)r=sc.filter(o=>o.s>=.45).slice(0,3);
+ return{list:r.map(o=>o.x),fuzzy:r.length>0&&r[0].s<.85}}
 const has=(a,b)=>a.toLowerCase().includes(b.toLowerCase());
 function pick(inp,cb){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{const i=new Image();i.onload=()=>{const k=Math.min(1,500/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);cb(c.toDataURL('image/jpeg',.7))};i.src=e.target.result};r.readAsDataURL(f)}
 function zoom(s){const d=document.createElement('div');d.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99;display:flex;align-items:center;justify-content:center';d.innerHTML=`<img src="${s}" style="max-width:95%;max-height:90%;border-radius:12px">`;d.onclick=()=>d.remove();document.body.appendChild(d)}
 const thumb=d=>d.img?`<img src="${d.img}" onclick="zoom(this.src)" style="width:56px;height:56px;object-fit:cover;border-radius:10px;flex:none">`:'';
-function catList(){const q=($('cs')?.value||'').trim();const have=new Set(meds.map(d=>d.name));let r=CAT.map((x,i)=>({...x,i})).filter(x=>!have.has(x.n)&&(!q||has(x.n,q)||x.c.includes(q)));const t=r.length;r=r.slice(0,40);
+function catList(){const q=($('cs')?.value||'').trim();const have=new Set(meds.map(d=>d.name));let r=CAT.map((x,i)=>({...x,i})).filter(x=>!have.has(x.n));if(q)r=smart(r,q,x=>x.n+' '+x.c).list;const t=r.length;r=r.slice(0,40);
  $('cl').innerHTML=(r.map(x=>`<div class="glass row"><div><b style="font-size:14px">${x.n}</b><br><small>${x.c}</small></div><span style="display:flex;gap:4px"><input type="number" id="cp${x.i}" placeholder="السعر" style="width:85px;margin:0"><button onclick="addCat(${x.i})">+</button></span></div>`).join('')+(t>40?`<small>يوجد ${t-40} أخرى، ابحث لتضييق النتائج</small>`:''))||'<small>لا نتائج</small>'}
 function addCat(i){const p=+$('cp'+i).value;if(!p)return alert('اكتب السعر أولاً');put({name:CAT[i].n,price:p,note:CAT[i].c,av:true,img:''})}
 function put(o,id){if(db){(id?db.collection('meds').doc(id).set(o):db.collection('meds').add(o)).catch(e=>alert('خطأ: '+e.message))}else{id?Object.assign(meds.find(x=>x.id==id),o):meds.push({id:Date.now()+'',...o});saveLocal();draw()}}
@@ -79,7 +92,8 @@ function draw(){$('cc').textContent=cart.length?`(${cart.length})`:'';const m=$(
  if(v=='cart')cartV();
  if(v=='login')m.innerHTML=`<h3>🔐 دخول الإدارة</h3><div class="glass" style="padding:14px"><input id="pw" type="password" placeholder="رمز الدخول"><button onclick="login()" style="width:100%">دخول</button></div>`;
  if(v=='admin'){adminV();if(tab=='meds')catList()}}
-function list(){const r=meds.filter(d=>has(d.name,q));$('l').innerHTML=r.length?r.map(d=>`<div class="glass row ${d.av?'':'na'}"><div style="display:flex;gap:8px;align-items:center">${thumb(d)}<div><b>${d.name}</b><br><small>${d.note||''}</small><br><b style="color:#0b7a75">${fmt(d.price)}</b></div></div>${d.av?`<button onclick="add('${d.id}')">+ أضف</button>`:'<small>غير متوفر</small>'}</div>`).join(''):'<div class="glass row">لا توجد نتائج — يمكنك طلبه عبر واتساب</div>'}
+function list(){let r=meds,msg='';if(q.trim()){const o=smart(meds,q,d=>d.name+' '+(d.note||''));r=o.list;if(o.fuzzy)msg='<div class="glass row">🤔 لم نجد تطابقاً تاماً، هل تقصد:</div>'}
+ $('l').innerHTML=msg+(r.length?r.map(d=>`<div class="glass row ${d.av?'':'na'}"><div style="display:flex;gap:8px;align-items:center">${thumb(d)}<div><b>${d.name}</b><br><small>${d.note||''}</small><br><b style="color:#0b7a75">${fmt(d.price)}</b></div></div>${d.av?`<button onclick="add('${d.id}')">+ أضف</button>`:'<small>غير متوفر</small>'}</div>`).join(''):'<div class="glass row">لا توجد نتائج — يمكنك طلبه عبر واتساب</div>')}
 function add(id){const i=cart.find(c=>c.id==id);i?i.n++:cart.push({id,n:1});$('cc').textContent=`(${cart.length})`}
 function cartV(){const t=cart.reduce((s,c)=>s+c.n*(meds.find(d=>d.id==c.id)?.price||0),0);
  $('main').innerHTML=`<h3>🛒 سلتي</h3>`+(cart.length?cart.map((c,i)=>{const d=meds.find(x=>x.id==c.id)||{name:'؟',price:0};return `<div class="glass row"><div><b>${d.name}</b><br><small>${fmt(d.price)}</small></div><span class="q"><button onclick="cart[${i}].n++;draw()">+</button> ${c.n} <button onclick="if(--cart[${i}].n<1)cart.splice(${i},1);draw()">−</button></span></div>`}).join('')+`<div class="glass" style="padding:14px"><b>المجموع: ${fmt(t)}</b>
