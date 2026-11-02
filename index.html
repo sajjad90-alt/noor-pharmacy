@@ -93,11 +93,11 @@ function draw(){$('cc').textContent=cart.length?`(${cart.length})`:'';const m=$(
  <div class="glass ic" onclick="location.href='tel:${S.phone}'"><i>📞</i>اتصل بنا</div></div>
  <p class="glass" style="padding:12px;text-align:center">اطلب دواءك وسيصلك إلى باب بيتك 🚚</p>`;
  if(v=='search'){const r=meds.filter(d=>has(d.name,q));
- m.innerHTML=`<input id="s" placeholder="🔍 ابحث عن اسم الدواء..." value="${q}" oninput="q=this.value;list()"><div id="l"></div>`;list();$('s').focus()}
+ m.innerHTML=`<input id="s" placeholder="🔍 ابحث عن اسم الدواء..." value="${q}" oninput="q=this.value;showList()"><div id="l"></div>`;showList();$('s').focus()}
  if(v=='cart')cartV();
  if(v=='login')m.innerHTML=`<h3>🔐 دخول الإدارة</h3><div class="glass" style="padding:14px"><input id="pw" type="password" placeholder="رمز الدخول"><button onclick="login()" style="width:100%">دخول</button></div>`;
  if(v=='admin'){adminV();if(tab=='meds')catList()}}
-function list(){if(!q.trim()){$('l').innerHTML='<div class="glass row" style="justify-content:center"><small>اكتب اسم الدواء للبحث عنه 🔍</small></div>';return}let r=all(),msg='';if(q.trim()){const o=smart(all(),q,d=>d.name+' '+(d.note||''));r=o.list;if(o.fuzzy)msg='<div class="glass row">🤔 لم نجد تطابقاً تاماً، هل تقصد:</div>'}
+function showList(){if(!q.trim()){$('l').innerHTML='<div class="glass row" style="justify-content:center"><small>اكتب اسم الدواء للبحث عنه 🔍</small></div>';return}let r=all(),msg='';if(q.trim()){const o=smart(all(),q,d=>d.name+' '+(d.note||''));r=o.list;if(o.fuzzy)msg='<div class="glass row">🤔 لم نجد تطابقاً تاماً، هل تقصد:</div>'}
  $('l').innerHTML=msg+(r.length?r.map(d=>`<div class="glass row ${d.av?'':'na'}"><div style="display:flex;gap:8px;align-items:center">${thumb(d)}<div><b>${d.name}</b><br><small>${d.note||''}</small></div></div>${d.av?`<button onclick="add('${d.id}')">+ أضف</button>`:'<small>غير متوفر</small>'}</div>`).join(''):'<div class="glass row">لا توجد نتائج — يمكنك طلبه عبر واتساب</div>')}
 function add(id){const i=cart.find(c=>c.id==id);i?i.n++:cart.push({id,n:1});$('cc').textContent=`(${cart.length})`}
 function cartV(){
