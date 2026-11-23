@@ -3,17 +3,31 @@
 <meta name="theme-color" content="#0b7a75"><link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png"><title>صيدلية النور - الشطرة</title>
 <style>
-:root{--t:#0b7a75;--g:rgba(255,255,255,.55)}
+:root{--t:#0b7a75;--g:rgba(255,255,255,.72)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{margin:0;font-family:Tahoma,Arial,sans-serif;color:#064c49;background:#fff url(bg.png) center top/cover no-repeat fixed;min-height:100vh}
-#top{position:fixed;top:0;left:0;right:0;height:34vh;z-index:5}
-#main{padding:calc(36vh) 14px 90px;min-height:100vh}
-.glass{background:var(--g);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.7);border-radius:18px;box-shadow:0 4px 14px rgba(11,122,117,.15)}
+body{margin:0;font-family:Tahoma,Arial,sans-serif;color:#064c49;min-height:100vh;background:linear-gradient(180deg,#e3f4f2 0%,#f8fdfc 38%,#fff 60%,#e4f3f1 100%) fixed}
+body:before{content:"";position:fixed;inset:0;z-index:-1;background:radial-gradient(ellipse at 0 20%,rgba(11,122,117,.10),transparent 55%),radial-gradient(ellipse at 100% 75%,rgba(120,200,120,.12),transparent 55%)}
+#top{position:fixed;top:0;left:0;right:0;height:60px;z-index:5;display:none;align-items:center;gap:10px;padding:6px 16px;background:var(--g);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,.8);box-shadow:0 2px 10px rgba(11,122,117,.12)}
+#top img{height:44px}#top b{font-size:19px;color:#0b6560}
+#main{padding:76px 14px 110px;min-height:100vh}
+.glass{background:var(--g);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.85);border-radius:22px;box-shadow:0 6px 18px rgba(11,122,117,.14)}
+.hero{text-align:center;padding-top:6px}
+.hero img{height:96px;display:block;margin:0 auto;filter:drop-shadow(0 4px 6px rgba(11,122,117,.25))}
+.hero .nm{font-size:36px;font-weight:900;color:#0b6560;line-height:1.25;margin-top:2px}
+.hero .chip{display:inline-block;margin:4px 0 12px;padding:4px 28px;border-radius:20px;background:linear-gradient(90deg,#128f88,#0b7a75);color:#fff;font-weight:bold;font-size:17px;box-shadow:0 3px 8px rgba(11,122,117,.3)}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.ic{padding:18px 8px;text-align:center;font-weight:bold;cursor:pointer;font-size:15px}
-.ic i{display:block;font-style:normal;font-size:34px;margin-bottom:6px}
-footer{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-around;padding:8px 6px calc(8px + env(safe-area-inset-bottom));z-index:6;border-radius:18px 18px 0 0}
-footer b{flex:1;text-align:center;font-size:12px;cursor:pointer}footer b i{display:block;font-style:normal;font-size:22px}
+.ic{position:relative;overflow:hidden;height:146px;padding:12px 8px 10px;text-align:center;font-weight:bold;cursor:pointer;font-size:16px;display:flex;flex-direction:column;align-items:center;justify-content:space-between}
+.ic:before,.call:before,.dl:before{content:"";position:absolute;top:0;right:0;width:46px;height:46px;background:linear-gradient(225deg,#14a39b,#0b7a75);border-radius:0 0 0 46px;opacity:.9}
+.ic img{height:92px;max-width:88%;object-fit:contain;position:relative}
+.ic span{position:relative}
+.call{position:relative;overflow:hidden;margin-top:12px;padding:12px 18px;display:flex;align-items:center;justify-content:center;gap:16px;font-weight:bold;font-size:22px;cursor:pointer}
+.call img{height:56px}
+.dl{position:relative;overflow:hidden;margin-top:12px;padding:8px 14px;display:flex;align-items:center;gap:10px;font-weight:bold;font-size:15px;line-height:1.7}
+.dl img{height:68px;flex:none}.dl:before{display:none}
+footer{position:fixed;bottom:8px;left:8px;right:8px;display:flex;justify-content:space-around;align-items:center;padding:8px 6px;z-index:6;border-radius:28px}
+footer b{flex:1;text-align:center;font-size:12px;cursor:pointer;color:#0b6560;padding:7px 0 5px;border-radius:20px;margin:0 2px}
+footer b svg{display:block;margin:0 auto 3px;width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+footer b.on{background:linear-gradient(180deg,#12918a,#0b7a75);color:#fff;box-shadow:0 3px 8px rgba(11,122,117,.35)}
 input,textarea,select{width:100%;padding:12px;margin:5px 0;border:1px solid #9bd;border-radius:12px;font:inherit;background:rgba(255,255,255,.85)}
 button{font:inherit;border:0;border-radius:12px;padding:10px 14px;background:var(--t);color:#fff;cursor:pointer}
 button.o{background:#c0392b}button.w{background:#25d366;width:100%;padding:14px;font-size:16px}
@@ -22,8 +36,8 @@ button.o{background:#c0392b}button.w{background:#25d366;width:100%;padding:14px;
 .tabs{display:flex;gap:6px;margin-bottom:8px}.tabs button{flex:1;padding:8px}
 .q button{padding:2px 10px}
 </style></head><body>
-<div id="top"></div><div id="main"></div>
-<footer class="glass"><b onclick="go('home')"><i>🏠</i>الرئيسية</b><b onclick="go('search')"><i>💊</i>الأدوية</b><b onclick="go('cos')"><i>💄</i>التجميل</b><b onclick="go('cart')"><i>🛒</i>سلتي <span id="cc"></span></b><b onclick="openWA()"><i>💬</i>واتساب</b></footer>
+<div id="top" onclick="tapTop()"></div><div id="main"></div>
+<footer class="glass" id="nv"></footer>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -76,22 +90,31 @@ if(CFG.firebase.apiKey){firebase.initializeApp(CFG.firebase);db=firebase.firesto
 }else{S=L('S',S);meds=L('meds',[{id:'1',name:'بنادول 500 ملغم',note:'مسكن وخافض حرارة',av:true},{id:'2',name:'فيتامين C',note:'',av:true}]);cosL=L('cos',[])}
 const saveLocal=()=>localStorage.setItem('meds',JSON.stringify(meds));
 // ===== الضغط 10 مرات في أعلى التطبيق =====
-let tp=0,tt;$('top').onclick=()=>{tp++;clearTimeout(tt);tt=setTimeout(()=>tp=0,4000);if(tp>=10){tp=0;go('login')}};
+let tp=0,tt;function tapTop(){tp++;clearTimeout(tt);tt=setTimeout(()=>tp=0,4000);if(tp>=10){tp=0;go('login')}}
 function go(x){v=x;draw();scrollTo(0,0)}
-function draw(){$('cc').textContent=cart.length?`(${cart.length})`:'';const m=$('main');
- if(v=='home')m.innerHTML=`<div class="grid">
- <div class="glass ic" onclick="go('search')"><i>💊</i>ابحث عن دوائك</div>
- <div class="glass ic" onclick="go('cos')" style="grid-column:1/-1"><i>💄</i>التجميل والعناية</div>
-  <div class="glass ic" onclick="go('cart')"><i>🛒</i>سلة الطلب</div>
- <div class="glass ic" onclick="openWA()"><i>💬</i>تواصل واتساب</div>
- <div class="glass ic" onclick="location.href='tel:${S.phone}'"><i>📞</i>اتصل بنا</div></div>
- <p class="glass" style="padding:12px;text-align:center">اطلب دواءك وسيصلك إلى باب بيتك 🚚</p>`;
+const IC={home:'<svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>',
+search:'<svg viewBox="0 0 24 24"><rect x="2.5" y="8.5" width="19" height="7" rx="3.5" transform="rotate(-45 12 12)"/><path d="M9.5 9.5l5 5"/></svg>',
+cos:'<svg viewBox="0 0 24 24"><path d="M8 21v-7h8v7z"/><path d="M9 14v-4h6v4"/><path d="M9 10l6-7v7"/></svg>',
+cart:'<svg viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.6 12h11l2-8H6"/></svg>',
+wa:'<svg viewBox="0 0 24 24"><path d="M21 12a8.5 8.5 0 0 1-12.4 7.5L3.5 21l1.4-4.8A8.5 8.5 0 1 1 21 12z"/><path d="M8.5 12h.01M12 12h.01M15.5 12h.01" stroke-width="2.6"/></svg>'};
+function navDraw(){const t=(k,f,l,x='')=>`<b class="${v==k?'on':''}" onclick="${f}">${IC[x||k]}${l}</b>`;
+ $('nv').innerHTML=t('home',"go('home')",'الرئيسية')+t('search',"go('search')",'الأدوية')+t('cos',"go('cos')",'التجميل')+t('cart',"go('cart')",'سلتي <span id="cc"></span>')+t('wa',"openWA()",'واتساب')}
+function draw(){navDraw();$('cc').textContent=cart.length?`(${cart.length})`:'';const m=$('main'),hd=$('top');
+ hd.style.display=v=='home'?'none':'flex';hd.innerHTML=v=='home'?'':'<img src="logo.png"><b>صيدلية النور</b>';m.style.paddingTop=v=='home'?'12px':'76px';
+ if(v=='home')m.innerHTML=`<div class="hero"><img src="logo.png" onclick="tapTop()"><div class="nm">صيدلية النور</div><div class="chip">— الشطرة —</div></div>
+ <div class="grid">
+ <div class="glass ic" onclick="go('search')"><img src="ic-search.png"><span>ابحث عن دوائك</span></div>
+ <div class="glass ic" onclick="go('cos')"><img src="ic-cosmetics.png"><span>التجميل والعناية</span></div>
+ <div class="glass ic" onclick="go('cart')"><img src="ic-cart.png"><span>سلة الطلب</span></div>
+ <div class="glass ic" onclick="openWA()"><img src="ic-wa.png"><span>تواصل واتساب</span></div></div>
+ <div class="glass call" onclick="location.href='tel:${S.phone}'"><img src="ic-call.png"><span>اتصل بنا</span></div>
+ <div class="glass dl"><img src="ic-delivery.png"><span>اطلب دواءك وسيصلك إلى باب بيتك</span></div>`;
  if(v=='search'){const r=meds.filter(d=>has(d.name,q));
  m.innerHTML=`<input id="s" placeholder="🔍 ابحث عن اسم الدواء..." value="${q}" oninput="q=this.value;showList()"><div id="l"></div>`;showList();$('s').focus()}
  if(v=='cart')cartV();if(v=='cos')cosV();
  if(v=='login')m.innerHTML=`<h3>🔐 دخول الإدارة</h3><div class="glass" style="padding:14px"><input id="pw" type="password" placeholder="رمز الدخول"><button onclick="login()" style="width:100%">دخول</button></div>`;
  if(v=='admin'){adminV();if(tab=='meds')adminList()}}
-function showList(){if(!q.trim()){$('l').innerHTML='<div class="glass row" style="justify-content:center"><small>اكتب اسم الدواء للبحث عنه 🔍</small></div>';return}let r=all(),msg='';if(q.trim()){const o=smart(all(),q,d=>d.name+' '+(d.note||'')+' '+(d.al||''));r=o.list;if(o.fuzzy)msg='<div class="glass row">🤔 لم نجد تطابقاً تاماً، هل تقصد:</div>'}
+function showList(){if(!q.trim()){$('l').innerHTML='<div class="glass row" style="justify-content:center;flex-direction:column;text-align:center"><img src="ic-meds.png" style="height:80px"><small>اكتب اسم الدواء للبحث عنه 🔍</small></div>';return}let r=all(),msg='';if(q.trim()){const o=smart(all(),q,d=>d.name+' '+(d.note||'')+' '+(d.al||''));r=o.list;if(o.fuzzy)msg='<div class="glass row">🤔 لم نجد تطابقاً تاماً، هل تقصد:</div>'}
  $('l').innerHTML=msg+(r.length?r.map(d=>`<div class="glass row ${d.av?'':'na'}"><div style="display:flex;gap:8px;align-items:center">${thumb(d)}<div><b>${d.name}</b><br><small>${d.note||''}</small></div></div>${d.av?`<button onclick="add('${d.id}')">+ أضف</button>`:'<small>غير متوفر</small>'}</div>`).join(''):'<div class="glass row">لا توجد نتائج — يمكنك طلبه عبر واتساب</div>')}
 function add(id){const i=cart.find(c=>c.id==id);i?i.n++:cart.push({id,n:1});$('cc').textContent=`(${cart.length})`}
 function cartV(){
