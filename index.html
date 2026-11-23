@@ -31,6 +31,15 @@ button.o{background:#c0392b}button.w{background:#25d366;width:100%;padding:14px;
 .row small{color:#555}.na{opacity:.5}h3{margin:6px 0;text-align:center;background:var(--g);border-radius:12px;padding:8px}
 .tabs{display:flex;gap:6px;margin-bottom:8px}.tabs button{flex:1;padding:8px}
 .q button{padding:2px 10px}
+/* شارة Netlify: إبقاؤها ظاهرة فوق الصورة بعيداً عن شريط التنقل السفلي */
+#nl-badge-frame {
+  position: fixed !important;
+  top: calc(12px + env(safe-area-inset-top, 0px)) !important;
+  bottom: auto !important;
+  right: 12px !important;
+  left: auto !important;
+  max-width: calc(100vw - 24px) !important;
+}
 </style></head><body>
 <div id="top"></div><div id="main"></div>
 <footer class="glass"><b data-v="home" onclick="go('home')"><img src="ic-home.png">الرئيسية</b><b data-v="search" onclick="go('search')"><img src="ic-meds.png">الأدوية</b><b data-v="cos" onclick="go('cos')"><img src="ic-cosmetics.png">التجميل</b><b data-v="cart" onclick="go('cart')"><img src="ic-cart.png">سلتي <span id="cc"></span></b><b onclick="openWA()"><img src="ic-wa.png">واتساب</b></footer>
