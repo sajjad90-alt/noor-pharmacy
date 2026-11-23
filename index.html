@@ -23,7 +23,7 @@ button.o{background:#c0392b}button.w{background:#25d366;width:100%;padding:14px;
 .q button{padding:2px 10px}
 </style></head><body>
 <div id="top"></div><div id="main"></div>
-<footer class="glass"><b onclick="go('home')"><i>🏠</i>الرئيسية</b><b onclick="go('search')"><i>💊</i>الأدوية</b><b onclick="go('cart')"><i>🛒</i>سلتي <span id="cc"></span></b><b onclick="openWA()"><i>💬</i>واتساب</b></footer>
+<footer class="glass"><b onclick="go('home')"><i>🏠</i>الرئيسية</b><b onclick="go('search')"><i>💊</i>الأدوية</b><b onclick="go('cos')"><i>💄</i>التجميل</b><b onclick="go('cart')"><i>🛒</i>سلتي <span id="cc"></span></b><b onclick="openWA()"><i>💬</i>واتساب</b></footer>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -40,6 +40,7 @@ const MASTER=RAW.map(r=>({n:r[0],g:CATS[r[1]],c:r[2],a:r[3]})),MM={},MN=new Set(
 function all(){const have=new Set(meds.map(d=>d.name)),hid=new Set(S.hidden||[]);
  return meds.map(d=>{const m=MM[d.name];return m?{...d,g:d.g||m.g,al:d.al||m.a}:d}).concat(MASTER.map((x,i)=>({id:'m'+i,name:x.n,note:x.c,al:x.a,g:x.g,av:true,img:'',m:1})).filter(x=>!have.has(x.name)&&!hid.has(x.name)))}
 let curImg='',curAl='',aq='',ag='',ap=40;
+let cosL=[],cosCat='all',cosQ='',cosImg='';const COSC=[['skin','العناية بالبشرة والجسم'],['hair','العناية بالشعر'],['mk','المكياج']],COSN=Object.fromEntries(COSC);
 
 /* ===== البحث الذكي ===== */
 const AM={'أ':'ا','إ':'ا','آ':'ا','ى':'ي','ة':'ه','ؤ':'و','ئ':'ي','ء':'','ق':'ك','ث':'س','ص':'س','ز':'س','ذ':'د','ض':'د','ظ':'د','ط':'ت'};
@@ -71,7 +72,8 @@ const $=id=>document.getElementById(id),fmt=n=>Number(n).toLocaleString('ar-IQ')
 if(CFG.firebase.apiKey){firebase.initializeApp(CFG.firebase);db=firebase.firestore();
  db.collection('settings').doc('main').onSnapshot(d=>{if(d.exists){S=d.data();draw()}});
  db.collection('meds').orderBy('name').onSnapshot(s=>{meds=s.docs.map(d=>({id:d.id,...d.data()}));draw()});
-}else{S=L('S',S);meds=L('meds',[{id:'1',name:'بنادول 500 ملغم',note:'مسكن وخافض حرارة',av:true},{id:'2',name:'فيتامين C',note:'',av:true}])}
+ db.collection('cosmetics').onSnapshot(s=>{cosL=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.at||0)-(a.at||0));draw()},e=>console.log(e));
+}else{S=L('S',S);meds=L('meds',[{id:'1',name:'بنادول 500 ملغم',note:'مسكن وخافض حرارة',av:true},{id:'2',name:'فيتامين C',note:'',av:true}]);cosL=L('cos',[])}
 const saveLocal=()=>localStorage.setItem('meds',JSON.stringify(meds));
 // ===== الضغط 10 مرات في أعلى التطبيق =====
 let tp=0,tt;$('top').onclick=()=>{tp++;clearTimeout(tt);tt=setTimeout(()=>tp=0,4000);if(tp>=10){tp=0;go('login')}};
@@ -79,29 +81,45 @@ function go(x){v=x;draw();scrollTo(0,0)}
 function draw(){$('cc').textContent=cart.length?`(${cart.length})`:'';const m=$('main');
  if(v=='home')m.innerHTML=`<div class="grid">
  <div class="glass ic" onclick="go('search')"><i>💊</i>ابحث عن دوائك</div>
- <div class="glass ic" onclick="go('cart')"><i>🛒</i>سلة الطلب</div>
+ <div class="glass ic" onclick="go('cos')" style="grid-column:1/-1"><i>💄</i>التجميل والعناية</div>
+  <div class="glass ic" onclick="go('cart')"><i>🛒</i>سلة الطلب</div>
  <div class="glass ic" onclick="openWA()"><i>💬</i>تواصل واتساب</div>
  <div class="glass ic" onclick="location.href='tel:${S.phone}'"><i>📞</i>اتصل بنا</div></div>
  <p class="glass" style="padding:12px;text-align:center">اطلب دواءك وسيصلك إلى باب بيتك 🚚</p>`;
  if(v=='search'){const r=meds.filter(d=>has(d.name,q));
  m.innerHTML=`<input id="s" placeholder="🔍 ابحث عن اسم الدواء..." value="${q}" oninput="q=this.value;showList()"><div id="l"></div>`;showList();$('s').focus()}
- if(v=='cart')cartV();
+ if(v=='cart')cartV();if(v=='cos')cosV();
  if(v=='login')m.innerHTML=`<h3>🔐 دخول الإدارة</h3><div class="glass" style="padding:14px"><input id="pw" type="password" placeholder="رمز الدخول"><button onclick="login()" style="width:100%">دخول</button></div>`;
  if(v=='admin'){adminV();if(tab=='meds')adminList()}}
 function showList(){if(!q.trim()){$('l').innerHTML='<div class="glass row" style="justify-content:center"><small>اكتب اسم الدواء للبحث عنه 🔍</small></div>';return}let r=all(),msg='';if(q.trim()){const o=smart(all(),q,d=>d.name+' '+(d.note||'')+' '+(d.al||''));r=o.list;if(o.fuzzy)msg='<div class="glass row">🤔 لم نجد تطابقاً تاماً، هل تقصد:</div>'}
  $('l').innerHTML=msg+(r.length?r.map(d=>`<div class="glass row ${d.av?'':'na'}"><div style="display:flex;gap:8px;align-items:center">${thumb(d)}<div><b>${d.name}</b><br><small>${d.note||''}</small></div></div>${d.av?`<button onclick="add('${d.id}')">+ أضف</button>`:'<small>غير متوفر</small>'}</div>`).join(''):'<div class="glass row">لا توجد نتائج — يمكنك طلبه عبر واتساب</div>')}
 function add(id){const i=cart.find(c=>c.id==id);i?i.n++:cart.push({id,n:1});$('cc').textContent=`(${cart.length})`}
 function cartV(){
- $('main').innerHTML=`<h3>🛒 سلتي</h3>`+(cart.length?cart.map((c,i)=>{const d=all().find(x=>x.id==c.id)||{name:'؟'};return `<div class="glass row"><div><b>${d.name}</b></div><span class="q"><button onclick="cart[${i}].n++;draw()">+</button> ${c.n} <button onclick="if(--cart[${i}].n<1)cart.splice(${i},1);draw()">−</button></span></div>`}).join('')+`<div class="glass" style="padding:14px">
+ $('main').innerHTML=`<h3>🛒 سلتي</h3>`+(cart.length?cart.map((c,i)=>{const d=fi(c.id)||{name:'؟'};return `<div class="glass row"><div><b>${d.name}</b></div><span class="q"><button onclick="cart[${i}].n++;draw()">+</button> ${c.n} <button onclick="if(--cart[${i}].n<1)cart.splice(${i},1);draw()">−</button></span></div>`}).join('')+`<div class="glass" style="padding:14px">
  <input id="ph" type="tel" placeholder="📱 رقم هاتفك" value="${localStorage.ph||''}"><input id="lo" placeholder="📍 موقعك / عنوانك"><button onclick="gps()" style="width:100%;margin-bottom:8px">📍 تحديد موقعي تلقائياً</button>
  <button class="w" onclick="send()">إرسال الطلب عبر واتساب</button></div>`:'<div class="glass row">السلة فارغة</div>')}
 function gps(){navigator.geolocation.getCurrentPosition(p=>$('lo').value=`https://maps.google.com/?q=${p.coords.latitude},${p.coords.longitude}`,()=>toast('فعّل خدمة الموقع'),{enableHighAccuracy:true})}
 function send(){const ph=$('ph').value.trim(),lo=$('lo').value.trim();if(!S.wa)return toast('رقم الواتساب غير مضبوط من الإدارة');if(!ph||!lo)return toast('أدخل رقم الهاتف والموقع');localStorage.ph=ph;
- const ls=cart.map(c=>{const d=all().find(x=>x.id==c.id)||{name:'؟'};return `• ${d.name} × ${c.n}`}).join('\n');
+ const ls=cart.map(c=>{const d=fi(c.id)||{name:'؟'};return `• ${d.name} × ${c.n}${d.price?' = '+fmt(d.price*c.n):''}`}).join('\n');
  const msg=`🏥 طلب جديد - صيدلية النور\n${ls}\n📱 الهاتف: ${ph}\n📍 الموقع: ${lo}`;
  if(db)db.collection('orders').add({msg,ph,lo,at:Date.now()});
  window.open(`https://wa.me/${S.wa}?text=${encodeURIComponent(msg)}`);cart=[];go('home')}
 function openWA(){window.open(`https://wa.me/${S.wa}`)}
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fi=id=>String(id).startsWith('c_')?cosL.find(x=>'c_'+x.id==id):all().find(x=>x.id==id);
+// ===== التجميل (واجهة الزبائن) =====
+function cosFilt(){const k=cosQ.trim();let r=cosL.filter(d=>d.av!==false&&(cosCat=='all'||d.cat==cosCat));if(k)r=smart(r,k,d=>d.name).list;return r}
+function cosCard(d){return `<div class="glass" style="padding:8px;text-align:center">${d.img?`<img src="${d.img}" onclick="zoom(this.src)" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px">`:'<div style="font-size:42px;padding:20px 0">💄</div>'}<b style="display:block;font-size:14px;margin:6px 0">${esc(d.name)}</b><small>${COSN[d.cat]||''}</small>${d.price?`<div style="font-weight:bold;margin:4px 0">${fmt(d.price)}</div>`:''}<button style="width:100%;margin-top:4px" onclick="add('c_${d.id}');toast('تمت الإضافة للسلة ✅')">+ أضف</button></div>`}
+function cosList(){const r=cosFilt();$('cosl').innerHTML=r.length?r.map(cosCard).join(''):'<div class="glass row" style="grid-column:1/-1;justify-content:center">لا توجد منتجات في هذا القسم بعد</div>'}
+function cosV(){$('main').innerHTML=`<h3>💄 التجميل والعناية</h3><div class="tabs" style="flex-wrap:wrap">${[['all','الكل'],...COSC].map(([k,n])=>`<button style="font-size:12px;padding:8px 4px;${cosCat==k?'':'background:#7fb5b2'}" onclick="cosCat='${k}';cosV()">${n}</button>`).join('')}</div><input id="cosq" placeholder="🔍 ابحث عن منتج..." value="${esc(cosQ)}" oninput="cosQ=this.value;cosList()"><div class="grid" id="cosl"></div>`;cosList()}
+// ===== التجميل (الإدارة) =====
+function cosAdminV(){return `<div class="glass" style="padding:12px"><input type="hidden" id="xe"><input id="xn" placeholder="اسم المنتج"><select id="xc">${COSC.map(([k,n])=>`<option value="${k}">${n}</option>`).join('')}</select><input id="xp" type="number" inputmode="numeric" placeholder="السعر بالدينار"><input type="file" id="xf" accept="image/*" onchange="pick(this,d=>{cosImg=d;xpv.src=d;xpv.style.display='block'})"><img id="xpv" style="display:none;width:80px;border-radius:10px;margin:4px 0"><label><input type="checkbox" id="xv" checked style="width:auto"> متوفر</label><button onclick="saveCos()" style="width:100%">💾 حفظ (إضافة / تعديل)</button></div><h3>💄 منتجات التجميل (${cosL.length})</h3>`+(cosL.map(d=>`<div class="glass row ${d.av!==false?'':'na'}"><div style="display:flex;gap:8px;align-items:center">${thumb(d)}<div><b style="font-size:14px">${esc(d.name)}</b><br><small>${COSN[d.cat]||''}${d.price?' • '+fmt(d.price):''}${d.av!==false?'':' • غير متوفر'}</small></div></div><span style="white-space:nowrap"><button onclick="cosEdit('${d.id}')">✏️</button> <button class="o" onclick="cosDel('${d.id}')">🗑</button></span></div>`).join('')||'<div class="glass row">لا توجد منتجات بعد</div>')}
+function cosPut(o,id){if(db){(id?db.collection('cosmetics').doc(id).set(o):db.collection('cosmetics').add(o)).catch(e=>toast('خطأ: '+e.message))}else{id?Object.assign(cosL.find(x=>x.id==id),o):cosL.unshift({id:Date.now()+'',...o});localStorage.cos=JSON.stringify(cosL);draw()}}
+function saveCos(){const o={name:xn.value.trim(),cat:xc.value,price:Number(xp.value)||0,av:xv.checked,img:cosImg,at:Date.now()};if(!o.name)return toast('اكتب اسم المنتج');
+ const id=xe.value;if(id){const old=cosL.find(x=>x.id==id);if(old){if(!o.img)o.img=old.img||'';o.at=old.at||o.at}}
+ cosPut(o,id);cosImg='';toast('تم الحفظ ✅')}
+function cosEdit(id){const d=cosL.find(x=>x.id==id);if(!d)return;xe.value=id;xn.value=d.name;xc.value=d.cat||'skin';xp.value=d.price||'';xv.checked=d.av!==false;cosImg='';if(d.img){xpv.src=d.img;xpv.style.display='block'}else xpv.style.display='none';scrollTo(0,0)}
+function cosDel(id){ask('حذف هذا المنتج؟',()=>{if(db)db.collection('cosmetics').doc(id).delete();else{cosL=cosL.filter(x=>x.id!=id);localStorage.cos=JSON.stringify(cosL);draw()}})}
 // ===== الإدارة =====
 async function sha(s){return[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)))].map(b=>b.toString(16).padStart(2,'0')).join('')}
 async function login(){const pw=$('pw').value;let ok=false;
@@ -109,7 +127,7 @@ async function login(){const pw=$('pw').value;let ok=false;
  if(!ok)return toast('رمز خاطئ');
  if(db)db.collection('orders').orderBy('at','desc').limit(30).onSnapshot(s=>{orders=s.docs.map(d=>d.data());if(v=='admin'&&tab=='ord')draw()},e=>console.log(e));go('admin')}
 function logout(){if(db)firebase.auth().signOut();go('home')}
-function adminV(){$('main').innerHTML=`<h3>⚙️ لوحة الإدارة</h3><div class="tabs"><button onclick="tab='meds';draw()">الأدوية</button><button onclick="tab='ord';draw()">الطلبات</button><button onclick="tab='set';draw()">الإعدادات</button><button class="o" onclick="logout()">خروج</button></div>`+(tab=='set'?setV():tab=='ord'?(orders.length?orders.map(o=>`<div class="glass row" style="white-space:pre-line;font-size:13px">${o.msg}</div>`).join(''):'<div class="glass row">لا طلبات (تحتاج Firebase)</div>'):
+function adminV(){$('main').innerHTML=`<h3>⚙️ لوحة الإدارة</h3><div class="tabs"><button onclick="tab='meds';draw()">الأدوية</button><button onclick="tab='cos';draw()">التجميل</button><button onclick="tab='ord';draw()">الطلبات</button><button onclick="tab='set';draw()">الإعدادات</button><button class="o" onclick="logout()">خروج</button></div>`+(tab=='set'?setV():tab=='cos'?cosAdminV():tab=='ord'?(orders.length?orders.map(o=>`<div class="glass row" style="white-space:pre-line;font-size:13px">${o.msg}</div>`).join(''):'<div class="glass row">لا طلبات (تحتاج Firebase)</div>'):
  `<div class="glass" style="padding:12px"><input type="hidden" id="eid"><input id="nm" placeholder="اسم الدواء"><input id="nt" placeholder="ملاحظة (اختياري)"><select id="gr"><option value="">التصنيف</option>${CATS.map(c=>`<option>${c}</option>`).join('')}</select><input type="file" id="fi" accept="image/*" onchange="pick(this,d=>{curImg=d;pv.src=d;pv.style.display='block'})"><img id="pv" style="display:none;width:80px;border-radius:10px;margin:4px 0"><label><input type="checkbox" id="av" checked style="width:auto"> متوفر</label><button onclick="saveMed()" style="width:100%">💾 حفظ (إضافة / تعديل)</button></div><h3>💊 كل الأدوية (${all().length})</h3><div class="glass" style="padding:10px"><input id="cs" placeholder="🔍 ابحث (عربي أو English)" value="${aq}" oninput="aq=this.value;ap=40;adminList()"><select id="cg" onchange="ag=this.value;ap=40;adminList()"><option value="">كل التصنيفات</option>${CATS.map(c=>`<option${c==ag?' selected':''}>${c}</option>`).join('')}</select><button class="o" style="width:100%;margin:4px 0" onclick="restore()">↩️ استرجاع المحذوف من القائمة (${(S.hidden||[]).length})</button><div id="cl"></div></div>`)}
 function setV(){return `<div class="glass" style="padding:12px"><b>رقم واتساب استقبال الطلبات</b><input id="swa" type="tel" value="${S.wa}" placeholder="9647701234567"><small>بصيغة دولية بدون + أو أصفار</small><br><b>رقم الاتصال</b><input id="sph" type="tel" value="${S.phone}" placeholder="07701234567"><button onclick="saveS()" style="width:100%">💾 حفظ</button></div>`}
 function saveS(){S={...S,wa:swa.value.replace(/\D/g,''),phone:sph.value.trim()};if(db)db.collection('settings').doc('main').set(S);else localStorage.S=JSON.stringify(S);toast('تم الحفظ ✅')}
