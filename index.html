@@ -11,16 +11,17 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;background:#0b5d58 url
 #main{padding:calc(36vh) 14px 90px;min-height:100vh}
 .glass{background:var(--g);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.7);border-radius:18px;box-shadow:0 4px 14px rgba(11,122,117,.15)}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.ic{padding:10px 4px;text-align:center;font-weight:bold;cursor:pointer;font-size:17px;color:#ffd24a;text-shadow:0 0 2px #000,0 2px 4px rgba(0,0,0,.9),0 0 10px rgba(0,0,0,.6)}
+.ic{padding:10px 4px;text-align:center;font-weight:bold;cursor:pointer;font-size:17px;color:#ffe21a;text-shadow:-1.5px -1.5px 0 #1b1400,1.5px -1.5px 0 #1b1400,-1.5px 1.5px 0 #1b1400,1.5px 1.5px 0 #1b1400,0 3px 6px rgba(0,0,0,.6)}
 .ic i{display:block;font-style:normal;font-size:34px;margin-bottom:6px}
 .ic img{display:block;width:100%;height:105px;object-fit:contain;margin:0 auto 8px;filter:drop-shadow(0 6px 8px rgba(0,0,0,.45))}
 .ic:active,.bn:active{transform:scale(.97)}
+.lb{display:inline-block;background:linear-gradient(#11624b,#093a2e);color:#ffe21a;padding:6px 18px;border-radius:999px;border:2px solid rgba(255,226,26,.45);box-shadow:0 3px 8px rgba(0,0,0,.45);text-shadow:0 1px 2px #000;font-size:16px}
 .ic.wide{display:flex;align-items:center;justify-content:center;gap:14px;grid-column:1/-1;padding:12px}
 .ic.wide img{width:76px;height:76px;margin:0}
-.dl{display:flex;align-items:center;gap:10px;padding:4px 6px;margin-top:8px;font-weight:bold;font-size:16px;color:#ffd24a;text-shadow:0 0 2px #000,0 2px 4px rgba(0,0,0,.9),0 0 10px rgba(0,0,0,.6)}
+.dl{display:flex;align-items:center;gap:10px;padding:4px 6px;margin-top:8px;font-weight:bold;font-size:16px;color:#ffe21a;text-shadow:-1.5px -1.5px 0 #1b1400,1.5px -1.5px 0 #1b1400,-1.5px 1.5px 0 #1b1400,1.5px 1.5px 0 #1b1400,0 3px 6px rgba(0,0,0,.6)}
 .dl img{width:130px;height:auto;flex:none;filter:drop-shadow(0 6px 8px rgba(0,0,0,.45))}
 footer b img{display:block;width:30px;height:30px;object-fit:contain;margin:0 auto 2px}
-footer b{border-radius:14px;padding:4px 0}footer.glass{background:rgba(5,55,52,.78)}footer b{color:#ffd24a;font-weight:bold}footer b.on{background:linear-gradient(#ffe38a,#e0a92a);color:#3b2a00}
+footer b{border-radius:14px;padding:4px 0}footer.glass{background:rgba(5,55,52,.78)}footer b{color:#ffe21a;font-weight:bold}footer b.on{background:linear-gradient(#ffe38a,#e0a92a);color:#3b2a00}
 footer{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-around;padding:8px 6px calc(8px + env(safe-area-inset-bottom));z-index:6;border-radius:18px 18px 0 0}
 footer b{flex:1;text-align:center;font-size:12px;cursor:pointer}footer b i{display:block;font-style:normal;font-size:22px}
 input,textarea,select{width:100%;padding:12px;margin:5px 0;border:1px solid #9bd;border-radius:12px;font:inherit;background:rgba(255,255,255,.85)}
@@ -89,8 +90,8 @@ let tp=0,tt;$('top').onclick=()=>{tp++;clearTimeout(tt);tt=setTimeout(()=>tp=0,4
 function go(x){v=x;draw();scrollTo(0,0)}
 function draw(){$('cc').textContent=cart.length?`(${cart.length})`:'';document.querySelectorAll('footer b[data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v==v));const m=$('main');
  if(v=='home')m.innerHTML=`<div class="grid">
- <div class="ic" onclick="go('search')"><img src="ic-search.png">ابحث عن دوائك</div>
- <div class="ic" onclick="go('cos')"><img src="ic-cosmetics.png">التجميل والعناية</div>
+ <div class="ic" onclick="go('search')"><img src="ic-search.png"><span class="lb">ابحث عن دوائك</span></div>
+ <div class="ic" onclick="go('cos')"><img src="ic-cosmetics.png"><span class="lb">التجميل والعناية</span></div>
  <div class="ic" onclick="go('cart')"><img src="ic-cart.png">سلة الطلب</div>
  <div class="ic" onclick="openWA()"><img src="ic-wa.png">تواصل واتساب</div>
  <div class="ic wide" onclick="location.href='tel:${S.phone}'"><img src="ic-call.png">اتصل بنا</div></div>
